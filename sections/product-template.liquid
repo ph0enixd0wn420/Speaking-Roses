@@ -3685,7 +3685,7 @@
           </div>
         </div>
 
-        {%- render 'product-form' with settings: settings, product: product, section.id: section.id -%}
+        {%- render 'product-form', settings: settings, product: product, section.id: section.id -%}
 
         <div class="product-page__upsell-wrapper">
           {%- render 'product-page-upsell' -%}
@@ -3695,13 +3695,13 @@
           {%- render 'social-sharing' -%}
         {%- endif -%}
 
-        {%- render 'product-video' with settings: settings, product: product, section.id: section.id -%}
+        {%- render 'product-video', settings: settings, product: product, section.id: section.id -%}
 
         {%- unless settings.product_tab_full_width -%}
           {%- if section.settings.enabled_tabs_accordion -%}
-            {%- render 'product-tabs-accordion' with settings: settings, product: product, section.id: section.id -%}
+            {%- render 'product-tabs-accordion', settings: settings, product: product, section.id: section.id -%}
           {% else %}
-            {%- render 'product-tabs' with settings: settings, product: product, section.id: section.id -%}
+            {%- render 'product-tabs', settings: settings, product: product, section.id: section.id -%}
           {%- endif -%}
 
           {%- if settings.enabled_social_share and settings.social_share_position == 'below' -%}
@@ -3712,9 +3712,9 @@
 
       {%- if settings.product_tab_full_width -%}
         {%- if section.settings.enabled_tabs_accordion -%}
-          {%- render 'product-tabs-accordion' with settings: settings, product: product, section.id: section.id -%}
+          {%- render 'product-tabs-accordion', settings: settings, product: product, section.id: section.id -%}
         {% else %}
-          {%- render 'product-tabs' with settings: settings, product: product, section.id: section.id -%}
+          {%- render 'product-tabs', settings: settings, product: product, section.id: section.id -%}
         {%- endif -%}
 
         {%- if settings.enabled_social_share and settings.social_share_position == 'below' -%}

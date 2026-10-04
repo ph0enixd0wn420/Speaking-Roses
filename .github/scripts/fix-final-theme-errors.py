@@ -1,9 +1,11 @@
 from pathlib import Path
+import re
 
-# Fix JSDoc text that Shopify's HTML parser mistakes for a custom element.
+# Fix every legacy JSDoc function tag that Shopify's HTML parser can mistake
+# for a custom element, e.g. @function[<productInventory>].
 js_path = Path('assets/VastaShop.js.liquid')
 js = js_path.read_text(encoding='utf-8')
-js = js.replace('@function[<productInventory>]', '@function productInventory')
+js = re.sub(r'@function\[<([A-Za-z_$][A-Za-z0-9_$]*)>\]', r'@function \1', js)
 js_path.write_text(js, encoding='utf-8')
 
 # Balance the popular-collection markup in every Liquid branch.

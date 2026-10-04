@@ -9,7 +9,7 @@ on:
       - main
 
 permissions:
-  contents: write
+  contents: read
   checks: write
 
 jobs:
@@ -19,47 +19,6 @@ jobs:
     steps:
       - name: Checkout theme
         uses: actions/checkout@v4
-
-      - name: Repair legacy settings schema metadata
-        if: github.event_name == 'push'
-        shell: bash
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          import json
-
-          path = Path('config/settings_schema.json')
-          data = json.loads(path.read_text(encoding='utf-8'))
-
-          info = data[0]
-          if info.get('name') == 'theme_info':
-              info['theme_name'] = 'Speaking Roses OS2'
-              info['theme_version'] = '2.4.1'
-              info['theme_author'] = 'ph0enixd0wn420'
-              info['theme_documentation_url'] = 'https://github.com/ph0enixd0wn420/Speaking-Roses'
-              info['theme_support_url'] = 'https://github.com/ph0enixd0wn420/Speaking-Roses/issues'
-
-          # Replace deprecated Helvetica defaults only. Existing merchant-selected
-          # values in settings_data.json are not changed by this migration.
-          for group in data:
-              for setting in group.get('settings', []):
-                  if setting.get('type') == 'font_picker':
-                      default = setting.get('default')
-                      if default == 'helvetica_n4':
-                          setting['default'] = 'assistant_n4'
-                      elif default == 'helvetica_n7':
-                          setting['default'] = 'assistant_n7'
-
-          path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
-          PY
-
-          if ! git diff --quiet -- config/settings_schema.json; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add config/settings_schema.json
-            git commit -m "fix: repair Shopify settings schema metadata [skip ci]"
-            git push
-          fi
 
       - name: Run Shopify Theme Check annotations
         uses: shopify/theme-check-action@v2

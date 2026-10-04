@@ -1,11 +1,11 @@
 [
   {
     "name": "theme_info",
-    "theme_name": "Speaking-Roses-Malvare",
-    "theme_version": "1.0",
-    "theme_author": "Gonzalo Daniel Aguilar",
-    "theme_documentation_url": "Private, yes, it Exists.",
-    "theme_support_url": "it doesn't exist anymore"
+    "theme_name": "Speaking Roses OS2",
+    "theme_version": "2.4.1",
+    "theme_author": "ph0enixd0wn420",
+    "theme_documentation_url": "https://github.com/ph0enixd0wn420/Speaking-Roses",
+    "theme_support_url": "https://github.com/ph0enixd0wn420/Speaking-Roses/issues"
   },
   {
     "name": "Store Info",
@@ -75,7 +75,7 @@
         "id": "facebook-app-id",
         "label": "Facebook App ID",
         "placeholder": "app_id",
-        "info": "Find your Facebook App ID on your [App Dashboard](https:\/\/developers.facebook.com\/apps\/redirect\/dashboard)."
+        "info": "Find your Facebook App ID on your [App Dashboard](https://developers.facebook.com/apps/redirect/dashboard)."
       },
       {
         "type": "header",
@@ -657,19 +657,19 @@
         "type": "font_picker",
         "label": "Headers Font Family",
         "id": "general_font",
-        "default": "helvetica_n4"
+        "default": "assistant_n4"
       },
       {
         "type": "font_picker",
         "label": "Sitewide Bold Body Font Family",
         "id": "copy_bold_body_font",
-        "default": "helvetica_n7"
+        "default": "assistant_n7"
       },
       {
         "type": "font_picker",
         "label": "Sitewide Body Font Family",
         "id": "copy_body_font",
-        "default": "helvetica_n4"
+        "default": "assistant_n4"
       },
       {
         "type": "header",
@@ -2452,7 +2452,7 @@
         "type": "text",
         "id": "text_cart_above_button",
         "label": "Text Under Proceed To Checkout",
-        "default": "<strong>Use Code <span style='color:blue;font-weight:bold'>GET5NOW <\/span>to save 5% <\/strong>"
+        "default": "<strong>Use Code <span style='color:blue;font-weight:bold'>GET5NOW </span>to save 5% </strong>"
       },
       {
         "type": "checkbox",
@@ -2497,7 +2497,7 @@
         "type": "url",
         "id": "href_continue_shopping",
         "label": "Continue Shopping Button Link",
-        "default": "\/collections\/all"
+        "default": "/collections/all"
       },
       {
         "type": "text",
@@ -3030,7 +3030,7 @@
       {
         "type": "header",
         "content": "REVIEWS",
-        "info": "Visit [Judge.me](https:\/\/apps.shopify.com\/judgeme), [Yotpo](https:\/\/apps.shopify.com\/yotpo-social-reviews), [Stamped.io](https:\/\/apps.shopify.com\/product-reviews-addon) or [Product Reviews](https:\/\/apps.shopify.com\/product-reviews) to download."
+        "info": "Visit [Judge.me](https://apps.shopify.com/judgeme), [Yotpo](https://apps.shopify.com/yotpo-social-reviews), [Stamped.io](https://apps.shopify.com/product-reviews-addon) or [Product Reviews](https://apps.shopify.com/product-reviews) to download."
       },
       {
         "type": "select",
@@ -3068,7 +3068,7 @@
         "id": "yotpo_key",
         "label": "Yotpo (APPKEY)",
         "placeholder": "App key",
-        "info": "Get your Yotpo Key in [Yotpo Support](https:\/\/support.yotpo.com\/en\/article\/finding-your-yotpo-app-key-and-api-secret)."
+        "info": "Get your Yotpo Key in [Yotpo Support](https://support.yotpo.com/en/article/finding-your-yotpo-app-key-and-api-secret)."
       },
       {
         "type": "header",
@@ -3086,7 +3086,7 @@
         "id": "product_enabled_recharge",
         "label": "Enable reCharge App",
         "default": false,
-        "info": "Visit [reCharge](https:\/\/apps.shopify.com\/subscription-payments) to download."
+        "info": "Visit [reCharge](https://apps.shopify.com/subscription-payments) to download."
       },
       {
         "type": "checkbox",

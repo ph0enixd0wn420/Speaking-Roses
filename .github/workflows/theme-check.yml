@@ -19,92 +19,14 @@ jobs:
     steps:
       - name: Checkout theme
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref || github.ref_name }}
 
-      - name: Fix final Shopify parser errors
+      - name: Apply final theme repairs
         if: github.event_name == 'push'
-        shell: bash
+        run: python .github/scripts/fix-final-theme-errors.py
+
+      - name: Commit repair changes
+        if: github.event_name == 'push'
         run: |
-          python - <<'PY'
-          from pathlib import Path
-
-          # JSDoc angle brackets were being parsed as an unclosed HTML element.
-          js_path = Path('assets/VastaShop.js.liquid')
-          js = js_path.read_text(encoding='utf-8')
-          js = js.replace('@function[<productInventory>]', '@function productInventory')
-          js_path.write_text(js, encoding='utf-8')
-
-          # Balance the popular-collection markup in every Liquid branch.
-          footer_path = Path('snippets/footer-layout04.liquid')
-          footer = footer_path.read_text(encoding='utf-8')
-
-          old = '''      <div class="popular-collection-links">
-        {%- for block in section.blocks -%}
-          {%- if 'popular_collection' == block.type -%}
-            {%- assign pop = pop | plus: 1 -%}
-
-            {%- if pop == 1 -%}
-              <h4 class="popular_collections_title">{{ section.settings.collection_title }}</h4>
-              <div class="popular_collections_links">
-            {%- endif -%}
-
-            <a
-              title="{{ block.settings.text_editable | strip_html | escape }}"
-              id="ftr-pop_col-link-{{ block.id }}"
-              href="{{ block.settings.link_popular_collection | default: '#' }}"
-            >
-              {%-
-                render 'responsive-image',
-                image: block.settings.url_popular_collection,
-                width: 200,
-                lazyload: true,
-                id: index
-              -%}
-              {% if block.settings.text_editable != blank %}
-                <h5 class="popular_collections_text">{{ block.settings.text_editable }}</h5>
-              {% endif %}
-            </a>
-          {%- endif -%}
-        {%- endfor -%}
-        {%- comment -%} Start Closing of the "popular_collections_links" tag {%- endcomment -%}
-        </div>
-        {%- comment -%} End Closing of the "popular_collections_links" tag {%- endcomment -%}
-      </div>'''
-
-          new = '''      <div class="popular-collection-links">
-        {%- assign popular_collection_blocks = section.blocks | where: 'type', 'popular_collection' -%}
-        {%- if popular_collection_blocks.size > 0 -%}
-          <h4 class="popular_collections_title">{{ section.settings.collection_title }}</h4>
-          <div class="popular_collections_links">
-            {%- for block in popular_collection_blocks -%}
-              <a
-                title="{{ block.settings.text_editable | strip_html | escape }}"
-                id="ftr-pop_col-link-{{ block.id }}"
-                href="{{ block.settings.link_popular_collection | default: '#' }}"
-              >
-                {%-
-                  render 'responsive-image',
-                  image: block.settings.url_popular_collection,
-                  width: 200,
-                  lazyload: true,
-                  id: index
-                -%}
-                {% if block.settings.text_editable != blank %}
-                  <h5 class="popular_collections_text">{{ block.settings.text_editable }}</h5>
-                {% endif %}
-              </a>
-            {%- endfor -%}
-          </div>
-        {%- endif -%}
-      </div>'''
-
-          if old not in footer:
-              raise SystemExit('Expected footer block was not found; refusing an unsafe rewrite.')
-          footer = footer.replace(old, new, 1)
-          footer_path.write_text(footer, encoding='utf-8')
-          PY
-
           if ! git diff --quiet; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

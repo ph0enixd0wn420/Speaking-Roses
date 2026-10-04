@@ -146,7 +146,7 @@
         {%- 
           render 'responsive-image',
             image: image,
-            lazyload: {{- section.settings.enable_lazyload -}},
+            lazyload: section.settings.enable_lazyload,
             width: 600,
             height: 600,
             alt: image.alt,

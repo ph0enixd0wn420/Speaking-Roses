@@ -129,36 +129,30 @@
       {%- endfor -%}
 
       <div class="popular-collection-links">
-        {%- for block in section.blocks -%}
-          {%- if 'popular_collection' == block.type -%}
-            {%- assign pop = pop | plus: 1 -%}
-
-            {%- if pop == 1 -%}
-              <h4 class="popular_collections_title">{{ section.settings.collection_title }}</h4>
-              <div class="popular_collections_links">
-            {%- endif -%}
-
-            <a
-              title="{{ block.settings.text_editable | strip_html | escape }}"
-              id="ftr-pop_col-link-{{ block.id }}"
-              href="{{ block.settings.link_popular_collection | default: '#' }}"
-            >
-              {%-
-                render 'responsive-image',
-                image: block.settings.url_popular_collection,
-                width: 200,
-                lazyload: true,
-                id: index
-              -%}
-              {% if block.settings.text_editable != blank %}
-                <h5 class="popular_collections_text">{{ block.settings.text_editable }}</h5>
-              {% endif %}
-            </a>
-          {%- endif -%}
-        {%- endfor -%}
-        {%- comment -%} Start Closing of the "popular_collections_links" tag {%- endcomment -%}
-        </div>
-        {%- comment -%} End Closing of the "popular_collections_links" tag {%- endcomment -%}
+        {%- assign popular_collection_blocks = section.blocks | where: 'type', 'popular_collection' -%}
+        {%- if popular_collection_blocks.size > 0 -%}
+          <h4 class="popular_collections_title">{{ section.settings.collection_title }}</h4>
+          <div class="popular_collections_links">
+            {%- for block in popular_collection_blocks -%}
+              <a
+                title="{{ block.settings.text_editable | strip_html | escape }}"
+                id="ftr-pop_col-link-{{ block.id }}"
+                href="{{ block.settings.link_popular_collection | default: '#' }}"
+              >
+                {%-
+                  render 'responsive-image',
+                  image: block.settings.url_popular_collection,
+                  width: 200,
+                  lazyload: true,
+                  id: index
+                -%}
+                {% if block.settings.text_editable != blank %}
+                  <h5 class="popular_collections_text">{{ block.settings.text_editable }}</h5>
+                {% endif %}
+              </a>
+            {%- endfor -%}
+          </div>
+        {%- endif -%}
       </div>
 
       {%- assign has_info_social = false -%}

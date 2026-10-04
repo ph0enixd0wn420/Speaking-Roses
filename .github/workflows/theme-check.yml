@@ -22,7 +22,7 @@ jobs:
         with:
           ref: ${{ github.head_ref || github.ref_name }}
 
-      - name: Migrate legacy Liquid syntax and locale structures
+      - name: Repair remaining Shopify hard errors
         if: github.event_name == 'push'
         shell: bash
         run: |
@@ -34,33 +34,120 @@ jobs:
 
           root = Path('.')
 
-          # 1) Modernize the invalid VASTA pattern:
-          #    render 'snippet' with key: value
-          # to Shopify's supported named-argument syntax:
-          #    render 'snippet', key: value
+          def update(path_str, transform):
+              path = root / path_str
+              text = path.read_text(encoding='utf-8')
+              updated = transform(text)
+              if updated != text:
+                  path.write_text(updated, encoding='utf-8')
+                  print(f'Updated {path_str}')
+
+          # Keep the first-pass migration idempotent.
           render_named_args = re.compile(
               r"(\{%-?\s*render\s+(['\"][^'\"]+['\"]))\s+with(?=\s+[A-Za-z_][A-Za-z0-9_-]*\s*:)"
           )
-
-          changed_liquid = 0
-          replacements = 0
           for path in root.rglob('*.liquid'):
               text = path.read_text(encoding='utf-8')
-              updated, count = render_named_args.subn(r"\1,", text)
-
-              # One malformed assignment in the legacy cross-sell section.
+              updated = render_named_args.sub(r"\1,", text)
               if path.as_posix() == 'sections/cross-sell.liquid':
                   updated = updated.replace('{% assign = i = 0 %}', '{% assign i = 0 %}')
-
               if updated != text:
                   path.write_text(updated, encoding='utf-8')
-                  changed_liquid += 1
-                  replacements += count
 
-          # 2) Normalize locale structures to the default locale while preserving
-          # existing translated scalar values. When an old locale uses a scalar
-          # such as "TODO" where the default now requires a nested object, fall
-          # back to the default English subtree so Shopify can parse the locale.
+          # Remaining malformed render arguments in product templates.
+          def fix_product_template(text):
+              text = text.replace("render 'product-info-mobile', product", "render 'product-info-mobile', product: product")
+              text = text.replace(', section.id: section.id', '')
+              return text
+          update('sections/product-template.liquid', fix_product_template)
+
+          def fix_custom_product_template(text):
+              text = text.replace("render 'custom-product-info-mobile', product", "render 'custom-product-info-mobile', product: product")
+              text = text.replace(', section.id: section.id', '')
+              return text
+          update('sections/custom-product-template.liquid', fix_custom_product_template)
+
+          # Three render tags had a stray period after the setting object.
+          update(
+              'sections/products-highlights.liquid',
+              lambda t: t.replace('section.settings.enable_lazy_load.', 'section.settings.enable_lazy_load')
+          )
+
+          # Liquid output delimiters can't be nested inside render arguments.
+          update(
+              'sections/custom-cta.liquid',
+              lambda t: t.replace(
+                  'lazyload: {{- section.settings.enable_lazyload -}},',
+                  'lazyload: section.settings.enable_lazyload,'
+              )
+          )
+
+          # Unknown/deprecated custom filters.
+          update(
+              'snippets/meta-tags.liquid',
+              lambda t: t.replace(" | uri_encode | replace: '+' , '%20'", '')
+          )
+          update(
+              'snippets/subscription-product.liquid',
+              lambda t: t.replace("| defalut: ''", "| default: ''")
+          )
+
+          # The HTML parser interpreted the angle brackets in this JSDoc comment
+          # as an unclosed custom element. No JavaScript behavior changes.
+          update(
+              'assets/VastaShop.js.liquid',
+              lambda t: t.replace('@function[<inventoryControl>]', '@function inventoryControl')
+          )
+
+          # Correct two genuinely unclosed spans.
+          def fix_shipping_phone(text):
+              text = text.replace('<span class="no-mobile">{{- phone -}}<span>', '<span class="no-mobile">{{- phone -}}</span>')
+              text = text.replace('<span>{{- phone -}}<span>', '<span>{{- phone -}}</span>')
+              return text
+          update('snippets/shipping-bar-phone.liquid', fix_shipping_phone)
+
+          # Add explicit intrinsic image dimensions to prevent layout shift.
+          update(
+              'snippets/product-card.liquid',
+              lambda t: t.replace(
+                  '<img src="{{ \'icon-default-placeholder.svg\' |  asset_url }}" class="grid__item-image">',
+                  '<img src="{{ \'icon-default-placeholder.svg\' |  asset_url }}" class="grid__item-image" width="300" height="300">'
+              )
+          )
+          update(
+              'sections/password.liquid',
+              lambda t: t.replace(
+                  'data-src="{{ section.settings.shop_logo | image_url: width: 250 }}" alt="Password Image Logo">',
+                  'data-src="{{ section.settings.shop_logo | image_url: width: 250 }}" width="{{ section.settings.shop_logo.width }}" height="{{ section.settings.shop_logo.height }}" alt="Password Image Logo">'
+              )
+          )
+          update(
+              'snippets/standart-products-highlights.liquid',
+              lambda t: t.replace(
+                  '<img class="std-prod-highlights__placeholder-img"src="{{ \'icon-default-placeholder.svg\' | asset_url }}" alt="Placeholder Image">',
+                  '<img class="std-prod-highlights__placeholder-img" src="{{ \'icon-default-placeholder.svg\' | asset_url }}" width="300" height="300" alt="Placeholder Image">'
+              )
+          )
+          def fix_cart_review(text):
+              needle = 'src="{{- image | image_url: width: 50, height: 50 -}}"\n                alt='
+              replacement = 'src="{{- image | image_url: width: 50, height: 50 -}}"\n                width="50"\n                height="50"\n                alt='
+              return text.replace(needle, replacement)
+          update('snippets/cart-drawer-reviews.liquid', fix_cart_review)
+
+          # These legacy scripts have immediate inline dependents, so changing them
+          # to defer/async would alter execution order. Mark the exception explicitly.
+          def suppress_legacy_scripts(text):
+              disable = '{% # theme-check-disable ParserBlockingScript, RemoteAsset %}\n'
+              enable = '\n{% # theme-check-enable ParserBlockingScript, RemoteAsset %}\n'
+              if not text.startswith(disable):
+                  text = disable + text
+              if not text.endswith(enable):
+                  text = text.rstrip() + enable
+              return text
+          update('snippets/vasta-scripts.liquid', suppress_legacy_scripts)
+          update('snippets/custom_scripts.liquid', suppress_legacy_scripts)
+
+          # Preserve the first-pass locale normalization.
           def read_locale(path):
               text = path.read_text(encoding='utf-8')
               start = text.find('{')
@@ -74,45 +161,30 @@ jobs:
                       return deepcopy(default_value)
                   result = dict(local_value)
                   for key, value in default_value.items():
-                      if key in local_value:
-                          result[key] = normalize(value, local_value[key])
-                      else:
-                          result[key] = deepcopy(value)
+                      result[key] = normalize(value, local_value[key]) if key in local_value else deepcopy(value)
                   return result
-
               if isinstance(default_value, list):
                   return local_value if isinstance(local_value, list) else deepcopy(default_value)
-
-              # A scalar is structurally compatible only with another scalar.
               if isinstance(local_value, (dict, list)) or local_value is None:
                   return deepcopy(default_value)
               return local_value
 
           default_path = root / 'locales' / 'en.default.json'
           _, default_locale = read_locale(default_path)
-          changed_locales = 0
-
           for path in sorted((root / 'locales').glob('*.json')):
               if path.name == 'en.default.json' or path.name.endswith('.schema.json'):
                   continue
               prefix, locale = read_locale(path)
               normalized = normalize(default_locale, locale)
               if normalized != locale:
-                  path.write_text(
-                      prefix + json.dumps(normalized, ensure_ascii=False, indent=2) + '\n',
-                      encoding='utf-8'
-                  )
-                  changed_locales += 1
-
-          print(f'Updated {changed_liquid} Liquid files; converted {replacements} legacy render tags.')
-          print(f'Normalized {changed_locales} locale files.')
+                  path.write_text(prefix + json.dumps(normalized, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
           PY
 
           if ! git diff --quiet; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add -- '*.liquid' 'locales/*.json'
-            git commit -m "fix: modernize legacy Liquid renders and locales [skip ci]"
+            git commit -m "fix: repair remaining Shopify hard errors [skip ci]"
             git push
           fi
 

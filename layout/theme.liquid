@@ -23,13 +23,6 @@ Description: Speaking Roses compatibility update preserving legacy storefront in
       bcpo.ogFormData = FormData;
     </script>
 
-    <link rel="dns-prefetch" href="https://ajax.googleapis.com">
-    <link rel="preconnect" href="https://ajax.googleapis.com">
-
-    {%- if settings.enable_zoom_feature_for_desktop and template contains 'product' -%}
-      <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/magnify/2.3.3/css/magnify.css" as="style">
-    {%- endif -%}
-
     {%- capture style_css -%}
       {%- render 'style-css' -%}
     {%- endcapture -%}
@@ -60,6 +53,8 @@ Description: Speaking Roses compatibility update preserving legacy storefront in
     {%- endif -%}
 
     {%- if settings.enable_zoom_feature_for_desktop and template contains 'product' -%}
+      {% # Magnify is a required third-party dependency for the legacy product zoom feature. %}
+      {% # theme-check-disable-next-line RemoteAsset %}
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/magnify/2.3.3/css/magnify.css">
     {%- endif -%}
 
@@ -120,17 +115,20 @@ Description: Speaking Roses compatibility update preserving legacy storefront in
     {%- endif -%}
 
     <!-- Preserve the store's existing Custom Price Calculator integration. -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script src="https://cdn-assets.custompricecalculator.com/shopify/calculator.js"></script>
+    {% # These vendor-hosted scripts are intentionally remote; defer preserves execution order without blocking parsing. %}
+    {% # theme-check-disable-next-line RemoteAsset %}
+    <script defer src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    {% # theme-check-disable-next-line RemoteAsset %}
+    <script defer src="https://cdn-assets.custompricecalculator.com/shopify/calculator.js"></script>
   </head>
 
-  {%- assign templateSuffix = template.suffix | handle -%}
-  {%- assign templateSuffix = ' ' | append: templateSuffix -%}
-  {%- if templateSuffix == ' ' -%}
-    {%- assign templateSuffix = '' -%}
+  {%- assign template_suffix = template.suffix | handle -%}
+  {%- assign template_suffix = ' ' | append: template_suffix -%}
+  {%- if template_suffix == ' ' -%}
+    {%- assign template_suffix = '' -%}
   {%- endif -%}
 
-  <body id="{{ page_title | handle }}" class="template-{{ template.name | handle }}{{ templateSuffix }}">
+  <body id="{{ page_title | handle }}" class="template-{{ template.name | handle }}{{ template_suffix }}">
     <h1 class="hide">{{ page_title }}</h1>
 
     <header class="header-content">
